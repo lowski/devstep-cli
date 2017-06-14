@@ -66,7 +66,7 @@ func (c *dockerClient) Execute(opts *DockerExecOpts) error {
 }
 
 func (c *dockerClient) Run(opts *DockerRunOpts) (*DockerRunResult, error) {
-	createOpts := opts.toCreateOpts()
+	createOpts := opts.ToCreateOpts()
 
 	log.Info("Creating container")
 	log.Debug("%+v", createOpts.Config)

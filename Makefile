@@ -6,7 +6,6 @@ ci: deps test vet build-ci
 
 deps:
 	go get ./...
-	go get golang.org/x/tools/cmd/vet
 
 build: $(wildcard **/*.go)
 	@echo "Building CLI..."
@@ -31,6 +30,6 @@ coverage:
 	@mkdir -p build
 	gocov test github.com/fgrehm/devstep-cli/devstep | gocov-html > build/coverage.html
 
-watchf:
-	go get github.com/parkghost/watchf/...
-	watchf
+godo:
+	go get gopkg.in/godo.v2/cmd/godo
+	godo watch

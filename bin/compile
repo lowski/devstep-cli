@@ -7,7 +7,7 @@ source $DEVSTEP_PATH/load-env.sh
 echo 'Fetching utilities...'
 go get -v github.com/axw/gocov/gocov
 go get -v gopkg.in/matm/v1/gocov-html
-go get -v github.com/parkghost/watchf
+go get -v gopkg.in/godo.v2/cmd/godo
 
 if ! [ -f $1/build/linux_amd64 ]; then
   make build

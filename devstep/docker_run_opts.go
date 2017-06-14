@@ -66,7 +66,7 @@ func (this DockerRunOpts) Merge(others ...*DockerRunOpts) *DockerRunOpts {
 	return &this
 }
 
-func (opts *DockerRunOpts) toCreateOpts() docker.CreateContainerOptions {
+func (opts *DockerRunOpts) ToCreateOpts() docker.CreateContainerOptions {
 	env := []string{}
 	for k, v := range opts.Env {
 		env = append(env, k+"="+v)
@@ -74,13 +74,17 @@ func (opts *DockerRunOpts) toCreateOpts() docker.CreateContainerOptions {
 
 	exposedPorts := make(map[docker.Port]struct{})
 	for _, port := range opts.Publish {
-		containerPort := strings.Split(port, ":")[1]
+		var containerPort string
+		ports := strings.Split(port, ":")
+		if len(ports) > 1 {
+		    containerPort = ports[1]
+		} else {
+		    containerPort = port
+		}
 		exposedPorts[docker.Port(containerPort)] = struct{}{}
 	}
 
     hostConfig := opts.toHostConfig()
-    log.Debug("HostConfig: %+v", hostConfig)
-
 	return docker.CreateContainerOptions{
 		Name: opts.Name,
 		Config: &docker.Config{
@@ -105,11 +109,16 @@ func (opts *DockerRunOpts) toHostConfig() *docker.HostConfig {
 	portBindings := make(map[docker.Port][]docker.PortBinding)
 	for _, port := range opts.Publish {
 		hostAndContainerPorts := strings.Split(port, ":")
-		hostPort := hostAndContainerPorts[0]
-		containerPort := docker.Port(hostAndContainerPorts[1])
 
-		bindings := portBindings[containerPort]
-		portBindings[containerPort] = append(bindings, docker.PortBinding{HostPort: hostPort})
+		if len(hostAndContainerPorts) > 1 {
+			hostBinding := docker.PortBinding{HostPort: hostAndContainerPorts[0]}
+			containerPort := docker.Port(hostAndContainerPorts[1])
+			portBindings[containerPort] = append(portBindings[containerPort], hostBinding)
+		} else {
+			hostBinding := docker.PortBinding{}
+			containerPort := docker.Port(port)
+			portBindings[containerPort] = append(portBindings[containerPort], hostBinding)
+		}
 	}
 
 	privileged := false

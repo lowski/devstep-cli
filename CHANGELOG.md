@@ -1,3 +1,17 @@
+## 2.0.0
+
+NEW FEATURES:
+
+  - Made host port optional in port mappings
+
+IMPROVEMENTS:
+
+  - Updated reference to cli package.
+
+BREAKING CHANGES:
+
+  - Updated API to be compatible with new Docker API (Moved HostConfig from start container to create container phase.)
+
 ## [1.0.0](https://github.com/fgrehm/devstep-cli/compare/v0.4.1...v1.0.0) (2016-03-09)
 
 NEW FEATURES:

@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-
 	"github.com/urfave/cli"
 	"github.com/fgrehm/devstep-cli/commands"
 	"github.com/fgrehm/devstep-cli/devstep"
@@ -14,7 +13,7 @@ func main() {
 	app.Author = "Fábio Rehm"
 	app.Email = "fgrehm@gmail.com"
 	app.Usage = "development environments made easy"
-	app.Version = "1.0.0"
+	app.Version = "2.0.0"
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "log-level, l", Value: "warning", Usage: "log level", EnvVar: "DEVSTEP_LOG"},

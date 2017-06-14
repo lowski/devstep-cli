@@ -12,7 +12,7 @@ import (
 var dockerRunFlags = []cli.Flag{
 	cli.StringFlag{Name: "v, volume", Usage: "Bind mount a volume"},
 	cli.StringFlag{Name: "w, working_dir", Usage: "Working directory inside the container"},
-	cli.StringSliceFlag{Name: "p, publish", Value: &cli.StringSlice{}, Usage: "Publish a container's port to the host (hostPort:containerPort)"},
+	cli.StringSliceFlag{Name: "p, publish", Value: &cli.StringSlice{}, Usage: "Publish a container's port to the host (containerPort or hostPort:containerPort)"},
 	cli.StringSliceFlag{Name: "link", Value: &cli.StringSlice{}, Usage: "Add link to another container (name:alias)"},
 	cli.StringSliceFlag{Name: "e, env", Value: &cli.StringSlice{}, Usage: "Set environment variables"},
 	cli.BoolFlag{Name: "privileged", Usage: "Give extended privileges to this container"},
@@ -60,7 +60,7 @@ func parseRunOpts(c *cli.Context) *devstep.DockerRunOpts {
 	}
 
 	// Validate ports
-	validPort := regexp.MustCompile(`^\d+:\d+$`)
+	validPort := regexp.MustCompile(`^\d+(:\d+)?$`)
 	for _, port := range runOpts.Publish {
 		if !validPort.MatchString(port) {
 			fmt.Println("Invalid publish arg: " + port)
