@@ -26,6 +26,7 @@ func main() {
 	containerName := os.Getenv("DEVSTEP_CONTAINER_NAME")
 	if containerName == "" {
 		app.Commands = []cli.Command{
+			commands.BinstubsCmd,
 			commands.BootstrapCmd,
 			commands.BuildCmd,
 			commands.CleanCmd,
