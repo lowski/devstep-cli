@@ -5,7 +5,9 @@ import (
 	"github.com/fgrehm/devstep-cli/devstep"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 )
 
 func Test_Defaults(t *testing.T) {
@@ -22,6 +24,7 @@ func Test_Defaults(t *testing.T) {
 	equals(t, "/workspace", config.GuestDir)
 	equals(t, "/tmp/devstep/cache", config.CacheDir)
 	equals(t, "devstep/a-project-dir", config.RepositoryName)
+	equals(t, map[string]*devstep.ProjectCommand{}, config.Commands)
 	// DISCUSS: How can we mock or test the name value?
 	assert(t, config.Defaults.Name != "", "Name not set")
 }
@@ -43,6 +46,7 @@ func Test_DefaultsWithBlankValuesOnYaml(t *testing.T) {
 	equals(t, "/workspace", config.GuestDir)
 	equals(t, "/tmp/devstep/cache", config.CacheDir)
 	equals(t, "devstep/a-project-dir", config.RepositoryName)
+	equals(t, map[string]*devstep.ProjectCommand{}, config.Commands)
 	assert(t, config.Defaults.Privileged == nil, "Privileged is set by default")
 }
 
@@ -90,6 +94,10 @@ volumes:
 environment:
   RACK_ENV: "production"
   RAILS_ENV: "staging"
+commands:
+  serve:
+    cmd: ['rails', 's']
+    publish: ['3000']
 hack:
   links:
   - "hcname:hname"
@@ -114,14 +122,40 @@ hack:
 	equals(t, "/path/to/guest/dir", config.GuestDir)
 
 	assert(t, config.Defaults != nil, "Defaults were not parsed")
-	equals(t, []string{"cname:name", "other_cname:other_name"}, config.Defaults.Links)
-	equals(t, []string{"/host/dir:/guest/dir", "/other/host/dir:/other/guest/dir"}, config.Defaults.Volumes)
-	// TODO: Bring back this check equals(t, map[string]string{"RACK_ENV": "production", "RAILS_ENV": "staging"}, config.Defaults.Env)
+	equals(t, []string{
+		"cname:name",
+		"other_cname:other_name",
+	}, config.Defaults.Links)
+	equals(t, []string{
+		"/host/dir:/guest/dir",
+		"/other/host/dir:/other/guest/dir",
+	}, config.Defaults.Volumes)
+
+	suffix := time.Now().Local().Format("20060102150405")
+	equals(t, map[string]string{
+		"DEVSTEP_CONTAINER_NAME": ".-" + suffix,
+		"RACK_ENV":               "production",
+		"RAILS_ENV":              "staging",
+	}, config.Defaults.Env)
+
+	assert(t, config.Commands != nil, "Commands were not parsed")
+	equals(t, "serve", config.Commands["serve"].Name)
+	equals(t, []string{"rails", "s"}, config.Commands["serve"].Cmd)
+	equals(t, []string{"3000"}, config.Commands["serve"].Publish)
 
 	assert(t, config.HackOpts != nil, "Hack options were not parsed")
-	equals(t, []string{"hcname:hname", "hother_cname:hother_name"}, config.HackOpts.Links)
-	equals(t, []string{"/h/host/dir:/h/guest/dir", "/h/other/host/dir:/h/other/guest/dir"}, config.HackOpts.Volumes)
-	equals(t, map[string]string{"RACK_ENV": "h-production", "RAILS_ENV": "h-staging"}, config.HackOpts.Env)
+	equals(t, []string{
+		"hcname:hname",
+		"hother_cname:hother_name",
+	}, config.HackOpts.Links)
+	equals(t, []string{
+		"/h/host/dir:/h/guest/dir",
+		"/h/other/host/dir:/h/other/guest/dir",
+	}, config.HackOpts.Volumes)
+	equals(t, map[string]string{
+		"RACK_ENV":  "h-production",
+		"RAILS_ENV": "h-staging",
+	}, config.HackOpts.Env)
 }
 
 func Test_LoadConfigFromHomeDirWithTemplates(t *testing.T) {
@@ -163,6 +197,10 @@ volumes:
 environment:
   RACK_ENV: "production"
   RAILS_ENV: "staging"
+commands:
+  serve:
+    cmd: ['rails', 's']
+    publish: ['3000']
 hack:
   links:
   - "hcname:hname"
@@ -189,14 +227,40 @@ hack:
 	assert(t, *config.Defaults.Privileged, "Privileged is not set")
 
 	assert(t, config.Defaults != nil, "Defaults were not parsed")
-	equals(t, []string{"cname:name", "other_cname:other_name"}, config.Defaults.Links)
-	equals(t, []string{"/host/dir:/guest/dir", "/other/host/dir:/other/guest/dir"}, config.Defaults.Volumes)
-	// TODO: Bring back this check equals(t, map[string]string{"RACK_ENV": "production", "RAILS_ENV": "staging"}, config.Defaults.Env)
+	equals(t, []string{
+		"cname:name",
+		"other_cname:other_name",
+	}, config.Defaults.Links)
+	equals(t, []string{
+		"/host/dir:/guest/dir",
+		"/other/host/dir:/other/guest/dir",
+	}, config.Defaults.Volumes)
+
+	suffix := time.Now().Local().Format("20060102150405")
+	equals(t, map[string]string{
+		"DEVSTEP_CONTAINER_NAME": filepath.Base(tempDir) + "-" + suffix,
+		"RACK_ENV":               "production",
+		"RAILS_ENV":              "staging",
+	}, config.Defaults.Env)
+
+	assert(t, config.Commands != nil, "Commands were not parsed")
+	equals(t, "serve", config.Commands["serve"].Name)
+	equals(t, []string{"rails", "s"}, config.Commands["serve"].Cmd)
+	equals(t, []string{"3000"}, config.Commands["serve"].Publish)
 
 	assert(t, config.HackOpts != nil, "Hack options were not parsed")
-	equals(t, []string{"hcname:hname", "hother_cname:hother_name"}, config.HackOpts.Links)
-	equals(t, []string{"/h/host/dir:/h/guest/dir", "/h/other/host/dir:/h/other/guest/dir"}, config.HackOpts.Volumes)
-	equals(t, map[string]string{"RACK_ENV": "h-production", "RAILS_ENV": "h-staging"}, config.HackOpts.Env)
+	equals(t, []string{
+		"hcname:hname",
+		"hother_cname:hother_name",
+	}, config.HackOpts.Links)
+	equals(t, []string{
+		"/h/host/dir:/h/guest/dir",
+		"/h/other/host/dir:/h/other/guest/dir",
+	}, config.HackOpts.Volumes)
+	equals(t, map[string]string{
+		"RACK_ENV":  "h-production",
+		"RAILS_ENV": "h-staging",
+	}, config.HackOpts.Env)
 }
 
 func Test_MergeGlobalConfigsWithProjectConfigs(t *testing.T) {
@@ -214,6 +278,10 @@ volumes:
 environment:
   RACK_ENV: "production"
   RAILS_ENV: "staging"
+commands:
+  serve:
+    cmd: ["rails", "s"]
+    publish: ["3000"]
 hack:
   links:
   - "hcname:hname"
@@ -242,6 +310,9 @@ volumes:
 environment:
   RACK_ENV: "p-production"
   DATABASE_URL: "some-url"
+commands:
+  reindex:
+    cmd: ["rake", "reindex"]
 hack:
   links:
   - "p-hcname:hname"
@@ -266,14 +337,50 @@ hack:
 	equals(t, "/p-path/to/guest/dir", config.GuestDir)
 
 	assert(t, config.Defaults != nil, "Defaults were not parsed")
-	equals(t, []string{"cname:name", "other_cname:other_name", "p-cname:name", "p-other_cname:other_name"}, config.Defaults.Links)
-	equals(t, []string{"/host/dir:/guest/dir", "/other/host/dir:/other/guest/dir", "/p/host/dir:/guest/dir", "/p/other/host/dir:/other/guest/dir"}, config.Defaults.Volumes)
-	// TODO: Bring back this check equals(t, map[string]string{"RACK_ENV": "p-production", "RAILS_ENV": "staging", "DATABASE_URL": "some-url"}, config.Defaults.Env)
+	equals(t, []string{
+		"cname:name",
+		"other_cname:other_name",
+		"p-cname:name",
+		"p-other_cname:other_name",
+	}, config.Defaults.Links)
+	equals(t, []string{
+		"/host/dir:/guest/dir",
+		"/other/host/dir:/other/guest/dir",
+		"/p/host/dir:/guest/dir",
+		"/p/other/host/dir:/other/guest/dir",
+	}, config.Defaults.Volumes)
+
+	suffix := time.Now().Local().Format("20060102150405")
+	equals(t, map[string]string{
+		"DATABASE_URL":           "some-url",
+		"DEVSTEP_CONTAINER_NAME": filepath.Base(tempProjDir) + "-" + suffix,
+		"RACK_ENV":               "p-production",
+		"RAILS_ENV":              "staging",
+	}, config.Defaults.Env)
+
+	assert(t, config.Commands != nil, "Commands were not parsed")
+	equals(t, []string{"rails", "s"}, config.Commands["serve"].Cmd)
+	equals(t, []string{"3000"}, config.Commands["serve"].Publish)
+	equals(t, []string{"rake", "reindex"}, config.Commands["reindex"].Cmd)
 
 	assert(t, config.HackOpts != nil, "Hack options were not parsed")
-	equals(t, []string{"hcname:hname", "hother_cname:hother_name", "p-hcname:hname", "p-hother_cname:hother_name"}, config.HackOpts.Links)
-	equals(t, []string{"/h/host/dir:/h/guest/dir", "/h/other/host/dir:/h/other/guest/dir", "/p/h/host/dir:/p/h/guest/dir", "/p/h/other/host/dir:/p/h/other/guest/dir"}, config.HackOpts.Volumes)
-	equals(t, map[string]string{"RACK_ENV": "p-h-production", "RAILS_ENV": "h-staging", "DATABASE_URL": "h-some-url"}, config.HackOpts.Env)
+	equals(t, []string{
+		"hcname:hname",
+		"hother_cname:hother_name",
+		"p-hcname:hname",
+		"p-hother_cname:hother_name",
+	}, config.HackOpts.Links)
+	equals(t, []string{
+		"/h/host/dir:/h/guest/dir",
+		"/h/other/host/dir:/h/other/guest/dir",
+		"/p/h/host/dir:/p/h/guest/dir",
+		"/p/h/other/host/dir:/p/h/other/guest/dir",
+	}, config.HackOpts.Volumes)
+	equals(t, map[string]string{
+		"DATABASE_URL": "h-some-url",
+		"RACK_ENV":     "p-h-production",
+		"RAILS_ENV":    "h-staging",
+	}, config.HackOpts.Env)
 }
 
 func Test_LoadConfigFromProjectDirWithTemplates(t *testing.T) {

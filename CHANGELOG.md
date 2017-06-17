@@ -3,6 +3,7 @@
 NEW FEATURES:
 
   - Made host port optional in port mappings
+  - Restored command aliases
 
 IMPROVEMENTS:
 

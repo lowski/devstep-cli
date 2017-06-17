@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
 	"github.com/fgrehm/devstep-cli/devstep"
+	"github.com/urfave/cli"
 )
 
 var InfoCmd = cli.Command{
@@ -11,7 +11,7 @@ var InfoCmd = cli.Command{
 	Usage: "show information about the current environment",
 	Action: func(c *cli.Context) error {
 		printConfig(project.Config())
-        return nil
+		return nil
 	},
 }
 
@@ -32,6 +32,15 @@ func printConfig(config *devstep.ProjectConfig) {
 	if config.HackOpts != nil {
 		fmt.Println("\n==> Hack options:")
 		printDockerRunOpts(config.HackOpts, "")
+	}
+	if config.Commands != nil {
+		fmt.Println("\n==> Commands:")
+		for _, cmd := range config.Commands {
+			fmt.Printf("* %s\n", cmd.Name)
+			fmt.Printf("  Cmd:        %v\n", cmd.Cmd)
+			fmt.Printf("  Publish:    %v\n", cmd.Publish)
+			printDockerRunOpts(&cmd.DockerRunOpts, "  ")
+		}
 	}
 }
 
